@@ -37,3 +37,9 @@ namespace :gitlab do
   end
 end
   
+task :console do
+  require 'irb'
+  ARGV.clear
+  puts "The importer is available here: @importer"
+  IRB.start
+end
