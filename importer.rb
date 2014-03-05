@@ -18,7 +18,30 @@ class Importer
       .reject{|u| alums.has_key?(u['email'])}
       .reject{|u| u['email'] == nil}
       .reject{|u| u['email'] == 'cruisecontrol@sep.com'}
-      .each{|u| puts "create #{u['email']}"}
+      .each do |u|
+        #{|u| puts "create #{u['email']}"}
+        @gitlab.users.create_user(u['email'], 'password', {projects_limit: 1000})
+      end
+  end
+
+  def load_ssh_keys
+    @gitlab.users.each do |u|
+      sudo(u.id) do
+        old_user = @user_hash.find{|h| h['email'] == u.email}
+        next unless old_user
+        old_user['ssh_keys'].each do |k|
+          puts "  #{k.split(' ').last} #{k}"
+          #@gitlab.users.create_ssh_key(k.split(' ').last, k)
+        end
+      end
+    end
+  end
+
+  def sudo(id)
+    Gitlab.sudo = id
+    yield
+  ensure
+    Gitlab.sudo = nil
   end
 end
 

@@ -35,6 +35,10 @@ namespace :gitlab do
   task :create_users do
     @importer.create_users
   end
+
+  task :load_ssh_keys do
+    @importer.load_ssh_keys
+  end
 end
   
 task :console do
