@@ -7,10 +7,21 @@ class Importer
     @project_hash = project_hash
     @repo_dir = repo_dir
     @gitlab = gitlab
+    @verbose = true
   end
 
   def alums
-    @alums ||= %w{maburke ajpanozzo kamarcum pclivengood ctcotten ndroe emshaw jdlowe tettestuser soward djkelley smsatchwill bmbotti edsage lgmiller dkshah jaseewer}.map{|u| "#{u}@sep.com"}.inject({}){|memo, obj| memo[obj]; memo}
+    @alums ||= %w{maburke ajpanozzo kamarcum pclivengood ctcotten ndroe emshaw jdlowe tettestuser soward djkelley smsatchwill bmbotti edsage lgmiller dkshah jaseewer}.map{|u| "#{u}@sep.com"}.inject({}){|memo, obj| memo[obj] = obj; memo}
+  end
+
+  def garble_email(email, index)
+    return "jon@sep.com" if index == 0
+    "test-#{email}"
+  end
+
+  def get_username(email)
+    return '' unless email
+    email.split('@').first
   end
 
   def create_users
