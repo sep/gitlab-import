@@ -18,7 +18,7 @@ def setup
     JSON.parse(File.read(File.join('output', 'groups.json'))),
     JSON.parse(File.read(File.join('output', 'export.json'))),
     'output',
-    Gitlab.client)
+    Gitlab)
 end
 
 @importer = setup
