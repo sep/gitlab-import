@@ -23,24 +23,29 @@ end
 
 @importer = setup
 
+desc 'list exported users'
 task :exported_users do
   @importer.user_hash.each{|u| puts "#{u['email']} #{u['ad_guid']}"}
 end
 
 namespace :gitlab do
+  desc 'list gitlab users'
   task :list_users do
     p @importer.gitlab.users
   end
 
+  desc 'create gitlab users from exported data'
   task :create_users do
     @importer.create_users
   end
 
+  desc 'load ssh keys from exported data'
   task :load_ssh_keys do
     @importer.load_ssh_keys
   end
 end
   
+desc 'an irb console with export data and the gitlab api available.'
 task :console do
   require 'irb'
   ARGV.clear
