@@ -58,18 +58,12 @@ class Importer
       end
   end
 
-  def create_groups
-    #group = create_group(name, path)
-    #add_group_member(group.id, user.id, 50 or "Master")
-    
-  end
-
   def create_projects
-    fallback_user = {username: 'jcfuller', id: 2}
+    fallback_user = {username: 'root', id: 1}
     gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
     @project_hash.each do |project|
-      puts "creating project #{project['title']}" if @verbose
+      puts "creating group #{project['title']}" if @verbose
 
       existing_users = project['repositories']
         .map{|r| r['committers']}
@@ -78,21 +72,38 @@ class Importer
         .reject{|p| not_there = !(gitlab_users.has_key?(p)); puts "  ignoring committer #{p}, not in gitlab." if not_there && @verbose; not_there}
         .map{|u| {username: u, id: gitlab_users[u]}}
 
-      first_user = existing_users.first || fallback_user
-      other_users = existing_users.drop(1)
-
-      new_project = @gitlab.create_project(project['title'], {description: project['description'], wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: first_user[:id]})
-      other_users.each do |u|
-        puts "  adding committer #{u[:username]}"
-        @gitlab.add_team_member(new_project.id, u[:id], 50)
+      group = @gitlab.create_group(project['title'], project['slug'])
+      (existing_users + [fallback_user]).each do |u|
+        puts "  adding user to group - #{u[:username]}" if @verbose
+        @gitlab.add_group_member(group.id, u[:id], 50)
       end
-    end
-    # create projects owned by users
-      # add users to project
+      project['repositories'].map do |repo|
+        puts "  adding project/repo to group - #{repo['name']}" if @verbose
 
-    # create projects owned by groups
-      # transfer
-      # add users to project
+        new_project = @gitlab.create_project(repo['name'], {description: repo['description'], wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: fallback_user[:id]})
+        @gitlab.transfer_project_to_group(group.id, new_project.id)
+      end
+
+    end
+
+    @gitlab.projects.each do |project|
+      old_repo = project_hash
+        .map{|p| p['repositories'].map{|r| {project: p['title'], repo: r['name'], p: p}}}
+        .flatten
+        .find{|p| p[:repo] == project.name && p[:project] == project.namespace.name}
+
+      dir = File.join('output', old_repo[:p]['slug'], old_repo[:repo])
+      puts "going to push repo for project #{project.name} (#{old_repo[:project]} = #{old_repo[:repo]})" if @verbose
+      puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
+      puts "remote repo: #{project.ssh_url_to_repo}"
+      Dir.chdir(dir) do
+        url = project.ssh_url_to_repo.gsub('gitlab.sep.com', '172.16.6.111') # REMOVE THIS!
+        puts "pushing to #{url}" if @verbose
+        `git remote add gitlab #{url}`
+        `git push gitlab --all`
+      end
+      puts "*"*80 if @verbose
+    end
   end
 
   def sudo(id)
