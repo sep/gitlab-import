@@ -14,10 +14,10 @@ def setup
   end
 
   Importer.new(
-    JSON.parse(File.read(File.join('output', 'users.json'))),
-    JSON.parse(File.read(File.join('output', 'groups.json'))),
-    JSON.parse(File.read(File.join('output', 'export.json'))),
-    'output',
+    JSON.parse(File.read(File.join('..', 'output', 'users.json'))),
+    JSON.parse(File.read(File.join('..', 'output', 'groups.json'))),
+    JSON.parse(File.read(File.join('..', 'output', 'export.json'))),
+    File.join('..', 'output'),
     Gitlab)
 end
 

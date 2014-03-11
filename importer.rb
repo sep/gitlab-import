@@ -92,13 +92,14 @@ class Importer
         .flatten
         .find{|p| p[:repo] == project.name && p[:project] == project.namespace.name}
 
-      dir = File.join('output', old_repo[:p]['slug'], old_repo[:repo])
+      dir = File.join(@repo_dir, old_repo[:p]['slug'], old_repo[:repo])
       puts "going to push repo for project #{project.name} (#{old_repo[:project]} = #{old_repo[:repo]})" if @verbose
       puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
       puts "remote repo: #{project.ssh_url_to_repo}"
       Dir.chdir(dir) do
-        url = project.ssh_url_to_repo.gsub('gitlab.sep.com', '172.16.6.111') # REMOVE THIS!
+        url = project.ssh_url_to_repo.gsub('gitlab-vm', '172.16.6.111') # REMOVE THIS!
         puts "pushing to #{url}" if @verbose
+        `git remote rm gitlab`
         `git remote add gitlab #{url}`
         `git push gitlab --all`
       end
