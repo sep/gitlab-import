@@ -93,6 +93,11 @@ class Importer
         .find{|p| p[:repo] == project.name && p[:project] == project.namespace.name}
 
       dir = File.join(@repo_dir, old_repo[:p]['slug'], old_repo[:repo])
+
+      if Rugged::Repository.new(dir).empty?
+        puts "skipping empty repo #{project.name}" if @verbose
+        next
+      end
       puts "going to push repo for project #{project.name} (#{old_repo[:project]} = #{old_repo[:repo]})" if @verbose
       puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
       puts "remote repo: #{project.ssh_url_to_repo}"
