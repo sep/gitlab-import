@@ -97,7 +97,7 @@ class Importer
       puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
       puts "remote repo: #{project.ssh_url_to_repo}"
       Dir.chdir(dir) do
-        url = project.ssh_url_to_repo.gsub('gitlab-vm', '172.16.6.111') # REMOVE THIS!
+        url = project.ssh_url_to_repo.gsub(ENV['GITLAB_HOST'], ENV['GITLAB_IP']) # REMOVE THIS!
         puts "pushing to #{url}" if @verbose
         `git remote rm gitlab`
         `git remote add gitlab #{url}`
