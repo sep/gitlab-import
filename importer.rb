@@ -31,7 +31,6 @@ class Importer
       .reject{|u| u['email'] == 'cruisecontrol@sep.com'}
       .each_with_index do |u, i|
         email = garble_email(u['email'], i)
-        p u
         name = get_username(u['email'])
         puts "creating #{email} - #{name}" if @verbose
         @gitlab.create_user(email, 'password', {username: name, name: name})
@@ -57,6 +56,16 @@ class Importer
       end
   end
 
+  def create_projects
+    @project_hash.each do |gitorious_project|
+      puts "creating group #{gitorious_project['title']}" if @verbose
+
+      group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
+      add_users(group, gitorious_project)
+      add_repos(group, gitorious_project)
+    end
+  end
+
   def add_users(gitlab_group, gitorious_project)
     gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
@@ -72,19 +81,6 @@ class Importer
     (existing_users + [fallback_user]).each do |u|
       puts "  adding user to group - #{u[:username]}" if @verbose
       @gitlab.add_group_member(gitlab_group.id, u[:id], 50)
-    end
-  end
-
-  def push_repo(gitlab_project, dir)
-    puts "going to push repo for project #{gitlab_project.name}" if @verbose
-    puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
-    puts "remote repo: #{gitlab_project.ssh_url_to_repo}"
-    Dir.chdir(dir) do
-      url = gitlab_project.ssh_url_to_repo.gsub(ENV['GITLAB_HOST'], ENV['GITLAB_IP']) # REMOVE THIS!
-      puts "pushing to #{url}" if @verbose
-      `git remote rm gitlab`
-      `git remote add gitlab #{url}`
-      `git push gitlab --all`
     end
   end
 
@@ -114,13 +110,16 @@ class Importer
     end
   end
 
-  def create_projects
-    @project_hash.each do |gitorious_project|
-      puts "creating group #{gitorious_project['title']}" if @verbose
-
-      group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
-      add_users(group, gitorious_project)
-      add_repos(group, gitorious_project)
+  def push_repo(gitlab_project, dir)
+    puts "going to push repo for project #{gitlab_project.name}" if @verbose
+    puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
+    puts "remote repo: #{gitlab_project.ssh_url_to_repo}"
+    Dir.chdir(dir) do
+      url = gitlab_project.ssh_url_to_repo.gsub(ENV['GITLAB_HOST'], ENV['GITLAB_IP']) # REMOVE THIS!
+      puts "pushing to #{url}" if @verbose
+      `git remote rm gitlab`
+      `git remote add gitlab #{url}`
+      `git push gitlab --all`
     end
   end
 
