@@ -29,7 +29,6 @@ class Importer
       .reject{|u| alums.has_key?(u['email'])}
       .reject{|u| u['email'] == nil}
       .reject{|u| u['email'] == 'cruisecontrol@sep.com'}
-      .take(3)  # REMOVE THIS AFTER TESTING
       .each_with_index do |u, i|
         email = garble_email(u['email'], i)
         p u
