@@ -35,13 +35,18 @@ namespace :gitlab do
   end
 
   desc 'create gitlab users from exported data'
-  task :create_users do
+  task :import_users do
     @importer.create_users
   end
 
   desc 'load ssh keys from exported data'
   task :load_ssh_keys do
     @importer.load_ssh_keys
+  end
+
+  desc 'create projects from exported data'
+  task :import_projects do
+    @importer.create_projects
   end
 end
   
