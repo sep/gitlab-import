@@ -48,6 +48,17 @@ namespace :gitlab do
   task :import_projects do
     @importer.create_projects
   end
+
+  task :remove_users do
+    @importer.gitlab
+      .users
+      .reject{|u| u.email == "admin@local.host"}
+      .each do |u|
+        puts "deleting #{u.email} (#{u.id})"
+        `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/users/#{u.id}`
+        puts
+      end
+  end
 end
   
 desc 'an irb console with export data and the gitlab api available.'
