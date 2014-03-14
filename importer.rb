@@ -40,7 +40,6 @@ class Importer
   def load_ssh_keys
     @gitlab
       .users
-      .drop(3)
       .each do |u|
         puts "loading keys for: #{u.username}" if @verbose
         sudo(u.id) do
@@ -57,6 +56,7 @@ class Importer
   end
 
   def create_projects
+    # TODO: what about 'user' projects from gitorious?
     @project_hash.each do |gitorious_project|
       puts "creating group #{gitorious_project['title']}" if @verbose
 
