@@ -13,12 +13,20 @@ def setup
     config.user_agent = 'importer'
   end
 
+  test_email = ENV['IMPORT_TEST_EMAIL']
+  verbose = !!ENV['VERBOSE']
+
+  puts "Verbose mode: #{verbose}"
+  puts "Test email address: #{test_email}" if verbose
+  puts
+
   Importer.new(
     JSON.parse(File.read(File.join('..', 'output', 'users.json'))),
     JSON.parse(File.read(File.join('..', 'output', 'groups.json'))),
     JSON.parse(File.read(File.join('..', 'output', 'export.json'))),
     File.join('..', 'output'),
-    Gitlab)
+    Gitlab,
+    {verbose: verbose, test_email: test_email})
 end
 
 @importer = setup

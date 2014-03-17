@@ -1,21 +1,20 @@
 class Importer
   attr_accessor :user_hash, :group_hash, :project_hash, :gitlab
 
-  def initialize(user_hash, group_hash, project_hash, repo_dir, gitlab)
+  def initialize(user_hash, group_hash, project_hash, repo_dir, gitlab, opts)
     @user_hash = user_hash
     @group_hash = group_hash
     @project_hash = project_hash
     @repo_dir = repo_dir
     @gitlab = gitlab
-    @verbose = true
+    @verbose = opts[:verbose] || false
+    @test_email = opts[:test_email]
+    @root = {username: ENV['GITLAB_ROOT_USERNAME'], id: ENV['GITLAB_ROOT_ID'].to_i}
   end
 
-  def alums
-    @alums ||= %w{maburke ajpanozzo kamarcum pclivengood ctcotten ndroe emshaw jdlowe tettestuser soward djkelley smsatchwill bmbotti edsage lgmiller dkshah jaseewer}.map{|u| "#{u}@sep.com"}.inject({}){|memo, obj| memo[obj] = obj; memo}
-  end
-
-  def garble_email(email, index)
-    return "jon@sep.com" if index == 0
+  def get_email(email, index)
+    return email unless @test_email
+    return @test_email if index == 0
     "test-#{email}"
   end
 
@@ -25,12 +24,12 @@ class Importer
   end
 
   def create_users
+    to_filter = File.read('filtered.txt').lines.map{|l| l.strip}.reject{|l| l.empty?}
     @user_hash
-      .reject{|u| alums.has_key?(u['email'])}
+      .reject{|u| to_filter.has_key?(u['email'])}
       .reject{|u| u['email'] == nil}
-      .reject{|u| u['email'] == 'cruisecontrol@sep.com'}
       .each_with_index do |u, i|
-        email = garble_email(u['email'], i)
+        email = get_email(u['email'], i)
         name = get_username(u['email'])
         puts "creating #{email} - #{name}" if @verbose
         @gitlab.create_user(email, 'password', {username: name, name: name})
@@ -69,8 +68,6 @@ class Importer
   def add_users(gitlab_group, gitorious_project)
     gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
-    fallback_user = {username: 'root', id: 1}
-
     existing_users = gitorious_project['repositories']
       .map{|r| r['committers']}
       .flatten
@@ -78,14 +75,13 @@ class Importer
       .reject{|p| not_there = !(gitlab_users.has_key?(p)); puts "  ignoring committer #{p}, not in gitlab." if not_there && @verbose; not_there}
       .map{|u| {username: u, id: gitlab_users[u]}}
 
-    (existing_users + [fallback_user]).each do |u|
+    (existing_users + [@root]).each do |u|
       puts "  adding user to group - #{u[:username]}" if @verbose
       @gitlab.add_group_member(gitlab_group.id, u[:id], 50)
     end
   end
 
   def add_repos(gitlab_group, gitorious_project)
-    fallback_user = {username: 'root', id: 1}
 
     gitorious_project['repositories'].each do |repo|
       puts "*"*80 if @verbose
@@ -101,7 +97,7 @@ class Importer
       description = repo['description'].empty? ? repo['name'] : repo['description']
       new_project = @gitlab.create_project(
         repo['name'],
-        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: fallback_user[:id]})
+        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: @root[:id]})
 
       @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
 

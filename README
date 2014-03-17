@@ -1,0 +1,12 @@
+
+
+## Environment
+
+* `GITLAB_URL` - this is the URL to your gitlab API (e.g. `http://localhost/api/v3`)
+* `GITLAB_TOKEN` - this should be the API token of the admin user.
+* `IMPORT_TEST_EMAIL` - [testing only] this should be the email address that can be used to confirm a user account.  __Note: the first imported user will get an email sent to this address.__
+* `VERBOSE` - don't define if you don't want it to be verbose
+
+## Filtering users
+
+Create a `filtered.txt` file.  One email address per line.
