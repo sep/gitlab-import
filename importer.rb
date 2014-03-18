@@ -24,7 +24,7 @@ class Importer
   end
 
   def create_users
-    to_filter = File.read('filtered.txt').lines.map{|l| l.strip}.reject{|l| l.empty?}
+    to_filter = File.read('filtered.txt').lines.map{|l| l.strip}.reject{|l| l.empty?}.inject({}){|memo, obj| memo[obj] = obj; memo}
     @user_hash
       .reject{|u| to_filter.has_key?(u['email'])}
       .reject{|u| u['email'] == nil}
