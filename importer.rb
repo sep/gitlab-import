@@ -55,13 +55,20 @@ class Importer
   end
 
   def create_projects
-    # TODO: what about 'user' projects from gitorious?
+    gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
+
     @project_hash.each do |gitorious_project|
       puts "creating group #{gitorious_project['title']}" if @verbose
 
-      group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
-      add_users(group, gitorious_project)
-      add_repos(group, gitorious_project)
+      user = gitlab_users[gitorious_project['title']]
+
+      puts "is user project? #{!!user}"
+
+      if user
+        group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
+        add_users(group, gitorious_project)
+      end
+      add_repos(group, gitorious_project, user)
     end
   end
 
@@ -81,7 +88,7 @@ class Importer
     end
   end
 
-  def add_repos(gitlab_group, gitorious_project)
+def add_repos(gitlab_group = nil, gitorious_project, user = nil)
 
     gitorious_project['repositories'].each do |repo|
       puts "*"*80 if @verbose
@@ -95,14 +102,17 @@ class Importer
       puts "  adding project/repo to group - #{repo['name']}" if @verbose
 
       description = repo['description'].empty? ? repo['name'] : repo['description']
+      owner = user || @root
       new_project = @gitlab.create_project(
         repo['name'],
         {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: @root[:id]})
 
-      @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
+      if gitlab_group
+        @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
+        new_project = @gitlab.project(new_project.id)
+      end
 
-      new_project_2 = @gitlab.project(new_project.id)
-      push_repo(new_project_2, gitorious_repo_dir)
+      push_repo(new_project, gitorious_repo_dir)
     end
   end
 
