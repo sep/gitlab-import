@@ -126,7 +126,7 @@ class Importer
       puts "pushing to #{url}" if @verbose
       `git remote rm gitlab`
       `git remote add gitlab #{url}`
-      `git push gitlab --all`
+      `git push gitlab --mirror`
     end
   end
 
