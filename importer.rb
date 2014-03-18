@@ -57,18 +57,22 @@ class Importer
   def create_projects
     gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
-    @project_hash.each do |gitorious_project|
-      puts "creating group #{gitorious_project['title']}" if @verbose
+    @project_hash
+      .reject{|p| gitlab_users[p['title']]}
+      .each do |gitorious_project|
+        puts "creating group for #{gitorious_project['title']}" if @verbose
 
-      user = gitlab_users[gitorious_project['title']]
-
-      puts "is user project? #{!!user}"
-
-      if user
         group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
         add_users(group, gitorious_project)
+        add_repos(group, gitorious_project, gitlab_users[gitorious_project['title']])
       end
-      add_repos(group, gitorious_project, user)
+
+    @project_hash
+      .find_all{|p| gitlab_users[p['title']]}
+      .each do |gitorious_project|
+        puts "creating user repos for #{gitorious_project['title']}" if @verbose
+        add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']])
+      end
     end
   end
 
@@ -105,7 +109,7 @@ def add_repos(gitlab_group = nil, gitorious_project, user = nil)
       owner = user || @root
       new_project = @gitlab.create_project(
         repo['name'],
-        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: @root[:id]})
+        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner})
 
       if gitlab_group
         @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
@@ -121,7 +125,7 @@ def add_repos(gitlab_group = nil, gitorious_project, user = nil)
     puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
     puts "remote repo: #{gitlab_project.ssh_url_to_repo}"
     Dir.chdir(dir) do
-      url = gitlab_project.ssh_url_to_repo.gsub(ENV['GITLAB_HOST'], ENV['GITLAB_IP']) # REMOVE THIS!
+      url = gitlab_project.ssh_url_to_repo
       puts "pushing to #{url}" if @verbose
       `git remote rm gitlab`
       `git remote add gitlab #{url}`
