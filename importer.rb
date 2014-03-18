@@ -55,7 +55,7 @@ class Importer
   end
 
   def create_projects
-    gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
+    gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj; memo}
 
     @project_hash
       .reject{|p| gitlab_users[p['title']]}
@@ -64,13 +64,13 @@ class Importer
 
         group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
         add_users(group, gitorious_project)
-        add_repos(group, gitorious_project, gitlab_users[gitorious_project['title']], @root)
+        add_repos(group, gitorious_project, @root)
       end
 
     @project_hash
       .find_all{|p| gitlab_users[p['title']]}
       .each do |gitorious_project|
-        puts "creating user repos for #{gitorious_project['title']} - (#{gitlab_users[p['title']]})" if @verbose
+        puts "creating user repos for #{gitorious_project['title']} - (#{gitlab_users[gitorious_project['title']].username})" if @verbose
         add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']], gitlab_users[p['title']])
       end
   end
@@ -106,7 +106,7 @@ class Importer
       description = repo['description'].empty? ? repo['name'] : repo['description']
       new_project = @gitlab.create_project(
         repo['name'],
-        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner})
+        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner[:id]})
   
       if gitlab_group
         @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
