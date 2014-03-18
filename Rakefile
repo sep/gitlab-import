@@ -36,6 +36,11 @@ task :exported_users do
   @importer.user_hash.each{|u| puts "#{u['email']} #{u['ad_guid']}"}
 end
 
+desc 'list exported projects'
+task :exported_projects do
+  @importer.project_hash.each{|p| puts p['title']; p['repositories'].each{|r| puts "  #{r['name']}"}}
+end
+
 namespace :gitlab do
   desc 'list gitlab users'
   task :list_users do

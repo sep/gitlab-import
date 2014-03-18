@@ -64,16 +64,15 @@ class Importer
 
         group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
         add_users(group, gitorious_project)
-        add_repos(group, gitorious_project, gitlab_users[gitorious_project['title']])
+        add_repos(group, gitorious_project, gitlab_users[gitorious_project['title']], @root)
       end
 
     @project_hash
       .find_all{|p| gitlab_users[p['title']]}
       .each do |gitorious_project|
-        puts "creating user repos for #{gitorious_project['title']}" if @verbose
-        add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']])
+        puts "creating user repos for #{gitorious_project['title']} - (#{gitlab_users[p['title']]})" if @verbose
+        add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']], gitlab_users[p['title']])
       end
-    end
   end
 
   def add_users(gitlab_group, gitorious_project)
@@ -92,30 +91,28 @@ class Importer
     end
   end
 
-def add_repos(gitlab_group = nil, gitorious_project, user = nil)
-
+  def add_repos(gitlab_group = nil, gitorious_project, owner)
     gitorious_project['repositories'].each do |repo|
       puts "*"*80 if @verbose
-      gitorious_repo_dir = File.join(@repo_dir, gitorious_project['slug'], repo['name'])
-
+      gitorious_repo_dir = File.join(@repo_dir, gitorious_project['slug'], "#{repo['name']}.git")
+  
       if Rugged::Repository.new(gitorious_repo_dir).empty?
        puts "skipping empty repo #{repo['name']}" if @verbose
        next
       end
-
+  
       puts "  adding project/repo to group - #{repo['name']}" if @verbose
-
+  
       description = repo['description'].empty? ? repo['name'] : repo['description']
-      owner = user || @root
       new_project = @gitlab.create_project(
         repo['name'],
         {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner})
-
+  
       if gitlab_group
         @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
         new_project = @gitlab.project(new_project.id)
       end
-
+  
       push_repo(new_project, gitorious_repo_dir)
     end
   end
