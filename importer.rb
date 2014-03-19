@@ -108,7 +108,7 @@ class Importer
   
       puts "  adding project/repo to group - #{repo['name']}" if @verbose
   
-      description = repo['description'].empty? ? repo['name'] : repo['description']
+      description = (repo['description'] || '').empty? ? repo['name'] : repo['description']
       new_project = @gitlab.create_project(
         repo['name'],
         {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner[:id]})
