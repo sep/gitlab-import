@@ -96,6 +96,11 @@ class Importer
       puts "*"*80 if @verbose
       gitorious_repo_dir = File.join(@repo_dir, gitorious_project['slug'], "#{repo['name']}.git")
   
+      if !Dir.exists?(gitorious_repo_dir)
+       puts "skipping bogus repo #{repo['name']}" if @verbose
+       next
+      end
+
       if Rugged::Repository.new(gitorious_repo_dir).empty?
        puts "skipping empty repo #{repo['name']}" if @verbose
        next
