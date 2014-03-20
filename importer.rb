@@ -159,10 +159,7 @@ class Importer
   end
 
   def push_repo(gitlab_project, dir)
-    puts "going to push repo for project #{gitlab_project.name}" if @verbose
-    puts "local repo: #{dir} - exists: #{Dir.exist?(dir)}" if @verbose
-    puts "remote repo: #{gitlab_project.ssh_url_to_repo}"
-    Dir.chdir(dir) do
+    Dir.chdir(dir) do # TODO: change this to use the repo
       url = gitlab_project.ssh_url_to_repo
       puts "pushing to #{url}" if @verbose
       repo = Rugged::Repository.new('.')
