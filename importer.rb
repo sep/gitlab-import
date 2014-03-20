@@ -54,15 +54,22 @@ class Importer
       end
   end
 
+  def sanitize(name)
+    name
+      .gsub('!', '')
+      .gsub('&', '-')
+  end
+
   def create_projects
     gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj; memo}
 
     @project_hash
       .reject{|p| gitlab_users[p['title']]}
       .each do |gitorious_project|
-        puts "creating group for #{gitorious_project['title']}" if @verbose
+        title = sanitize(gitorious_project['title'])
+        puts "creating group for #{title}" if @verbose
 
-        group = @gitlab.create_group(gitorious_project['title'], gitorious_project['slug'])
+        group = @gitlab.create_group(title, gitorious_project['slug'])
         add_users(group, gitorious_project)
         add_repos(group, gitorious_project, @root)
       end
@@ -106,11 +113,13 @@ class Importer
        next
       end
   
-      puts "  adding project/repo to group - #{repo['name']}" if @verbose
-  
-      description = (repo['description'] || '').empty? ? repo['name'] : repo['description']
+      name = sanitize(repo['name'] == 'production' ? 'something' : repo['name'])
+      description = (repo['description'] || '').empty? ? name : repo['description']
+
+      puts "  adding project/repo to group - #{name}" if @verbose
+
       new_project = @gitlab.create_project(
-        repo['name'],
+        name,
         {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner[:id]})
   
       if gitlab_group
