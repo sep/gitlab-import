@@ -32,7 +32,7 @@ class Importer
         email = get_email(u['email'], i)
         name = get_username(u['email'])
         puts "creating #{email} - #{name}" if @verbose
-        @gitlab.create_user(email, 'password', {username: name, name: name})
+        @gitlab.create_user(email, 'password', {username: name, name: name, projects_limit: 999})
       end
   end
 
