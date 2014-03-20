@@ -63,6 +63,7 @@ namespace :gitlab do
     @importer.create_projects
   end
 
+  desc 'remove users from gitlab.  (must be called multiple times because of paging'
   task :remove_users do
     @importer.gitlab
       .users
@@ -70,6 +71,17 @@ namespace :gitlab do
       .each do |u|
         puts "deleting #{u.email} (#{u.id})"
         `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/users/#{u.id}`
+        puts
+      end
+  end
+
+  desc 'remove groups from gitlab.'
+  task :remove_groups do
+    @importer.gitlab
+      .groups
+      .each do |g|
+        puts "deleting #{g.name} (#{g.id})"
+        `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/groups/#{g.id}`
         puts
       end
   end
