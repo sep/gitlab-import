@@ -85,6 +85,18 @@ namespace :gitlab do
         puts
       end
   end
+
+  desc 'remove user projects from gitlab.'
+  task :remove_user_projects do
+    @importer.gitlab.users.each do |u|
+      @importer.sudo(u.id) do
+        @importer.gitlab.projects.each do |p|
+          puts "deleting project #{p.name} (#{p.id})"
+          `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/projects/#{p.id}`
+        end
+      end
+    end
+  end
 end
   
 desc 'an irb console with export data and the gitlab api available.'
