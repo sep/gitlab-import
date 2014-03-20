@@ -71,14 +71,14 @@ class Importer
 
         group = @gitlab.create_group(title, gitorious_project['slug'])
         add_users(group, gitorious_project)
-        add_repos(group, gitorious_project, @root)
+        add_repos(group, gitorious_project, @root[:id])
       end
 
     @project_hash
       .find_all{|p| gitlab_users[p['title']]}
       .each do |gitorious_project|
         puts "creating user repos for #{gitorious_project['title']} - (#{gitlab_users[gitorious_project['title']].username})" if @verbose
-        add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']], gitlab_users[p['title']])
+        add_repos(nil, gitorious_project, gitlab_users[gitorious_project['title']].id)
       end
   end
 
@@ -98,7 +98,7 @@ class Importer
     end
   end
 
-  def add_repos(gitlab_group = nil, gitorious_project, owner)
+  def add_repos(gitlab_group = nil, gitorious_project, owner_id)
     gitorious_project['repositories'].each do |repo|
       puts "*"*80 if @verbose
       gitorious_repo_dir = File.join(@repo_dir, gitorious_project['slug'], "#{repo['name']}.git")
@@ -120,7 +120,7 @@ class Importer
 
       new_project = @gitlab.create_project(
         name,
-        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner[:id]})
+        {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner_id})
   
       if gitlab_group
         [1, 2, 3].each do |i|
