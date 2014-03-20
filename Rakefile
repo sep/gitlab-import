@@ -27,6 +27,7 @@ def setup
     JSON.parse(File.read(File.join(ENV['IMPORT_DATA_DIR'], 'export.json'))),
     File.join(ENV['IMPORT_DATA_DIR']),
     Gitlab,
+    (ENV['IMPORT_DONT_PUSH'] || "").split(',').map{|s| s.strip},
     {verbose: verbose, test_email: test_email})
 end
 

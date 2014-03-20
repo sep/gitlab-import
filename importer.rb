@@ -1,10 +1,11 @@
 class Importer
   attr_accessor :user_hash, :group_hash, :project_hash, :gitlab
 
-  def initialize(user_hash, group_hash, project_hash, repo_dir, gitlab, opts)
+  def initialize(user_hash, group_hash, project_hash, repo_dir, gitlab, dont_push_list, opts)
     @user_hash = user_hash
     @group_hash = group_hash
     @project_hash = project_hash
+    @dont_push_list = dont_push_list
     @repo_dir = repo_dir
     @gitlab = gitlab
     @verbose = opts[:verbose] || false
@@ -153,7 +154,11 @@ class Importer
       #refs_to_push = repo.ref_names.reject{n=~/remote/} 
       #remote.push(refs_to_push)
    
-      `git push gitlab --mirror`
+      if @dont_push_list.none?{|i| i == gitlab_project.name}
+        `git push gitlab --mirror`
+      else
+        puts "  ** not pushing #{gitlab_project.name}, it's in the ignore list"
+      end
     end
   end
 
