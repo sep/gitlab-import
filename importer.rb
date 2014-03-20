@@ -123,7 +123,15 @@ class Importer
         {description: description, wiki_enabled: true, wall_enabled: true, issues_enabled: true, snippets_enabled: true, merge_requests_enabled: true, public: true, user_id: owner[:id]})
   
       if gitlab_group
-        @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
+        [1, 2, 3].each do |i|
+          begin
+            @gitlab.transfer_project_to_group(gitlab_group.id, new_project.id)
+            break
+          rescue
+            "  transfer failed on try #{i}, waiting a little and then retrying (maybe)"
+           sleep(0.2)
+          end
+        end
         new_project = @gitlab.project(new_project.id)
       end
   
