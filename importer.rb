@@ -146,8 +146,13 @@ class Importer
     Dir.chdir(dir) do
       url = gitlab_project.ssh_url_to_repo
       puts "pushing to #{url}" if @verbose
-      `git remote rm gitlab`
-      `git remote add gitlab #{url}`
+      repo = Rugged::Repository.new('.')
+      if repo.remotes.none?{|remote| remote.name == 'gitlab'}
+        remote = Rugged::Remote.add(repo, 'gitlab', url)
+      end
+      #refs_to_push = repo.ref_names.reject{n=~/remote/} 
+      #remote.push(refs_to_push)
+   
       `git push gitlab --mirror`
     end
   end
