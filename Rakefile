@@ -64,10 +64,9 @@ namespace :gitlab do
     @importer.create_projects
   end
 
-  desc 'remove users from gitlab.  (must be called multiple times because of paging'
+  desc 'remove users from gitlab'
   task :remove_users do
-    @importer.gitlab
-      .users
+    @importer.get_users
       .reject{|u| u.email == "admin@local.host"}
       .each do |u|
         puts "deleting #{u.email} (#{u.id})"
@@ -76,10 +75,9 @@ namespace :gitlab do
       end
   end
 
-  desc 'remove groups from gitlab.'
+  desc 'remove groups from gitlab'
   task :remove_groups do
-    @importer.gitlab
-      .groups
+    @importer.get_groups
       .each do |g|
         puts "deleting #{g.name} (#{g.id})"
         `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/groups/#{g.id}`
@@ -87,14 +85,12 @@ namespace :gitlab do
       end
   end
 
-  desc 'remove user projects from gitlab.'
+  desc 'remove user projects from gitlab'
   task :remove_user_projects do
-    @importer.gitlab.users.each do |u|
-      @importer.sudo(u.id) do
-        @importer.gitlab.projects.each do |p|
-          puts "deleting project #{p.name} (#{p.id})"
-          `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/projects/#{p.id}`
-        end
+    @importer.get_users.each do |u|
+      @importer.get_user_projects(u).each do |p|
+        puts "deleting project #{p.name} (#{p.id})"
+        `curl --header "PRIVATE-TOKEN: #{ENV['GITLAB_TOKEN']}" -X DELETE #{ENV['GITLAB_URL']}/projects/#{p.id}`
       end
     end
   end

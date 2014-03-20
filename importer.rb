@@ -61,8 +61,26 @@ class Importer
       .gsub('&', '-')
   end
 
+  def get_groups(per_page=9999)
+    @gitlab.groups({per_page: per_page})
+  end
+
+  def get_users(per_page=9999)
+    @gitlab.users({per_page: per_page})
+  end
+
+  def get_user_projects(user, per_page=9999)
+    sudo(user.id) do
+      @gitlab.projects({scope: 'owned', per_page: per_page})
+    end
+  end
+
+  def get_projects(per_page=9999)
+    @gitlab.projects({scope: 'all', per_page: per_page})
+  end
+
   def create_projects
-    gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj; memo}
+    gitlab_users = get_users.inject({}){|memo, obj| memo[obj.username] = obj; memo}
 
     @project_hash
       .reject{|p| gitlab_users[p['title']]}
@@ -84,7 +102,7 @@ class Importer
   end
 
   def add_users(gitlab_group, gitorious_project)
-    gitlab_users = @gitlab.users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
+    gitlab_users = get_users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
     existing_users = gitorious_project['repositories']
       .map{|r| r['committers']}
