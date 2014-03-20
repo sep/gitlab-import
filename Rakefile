@@ -104,5 +104,6 @@ task :console do
   require 'irb'
   ARGV.clear
   puts "The importer is available here: @importer"
+  puts "The gitlab instance is available here: @importer.gitlab"
   IRB.start
 end
