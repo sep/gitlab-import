@@ -31,7 +31,6 @@ My recommended workflow:
     GITLAB_URL=http://your-url/api/v3
     GITLAB_TOKEN=your-root-api-token
     GITLAB_ROOT_ID=your-root-userid (probably 1)
-    GITLAB_ROOT_USERNAME=your-root-username (probably root)
     
     IMPORT_TEST_EMAIL=jon@sep.com
     IMPORT_DATA_DIR=../path-to-export
@@ -41,6 +40,7 @@ My recommended workflow:
 
 Note:
 
+* `GITLAB_ROOT_IT` - __[optional]:__ probably `1`
 * `IMPORT_TEST_EMAIL` - set this if you're testing.  if this is set:
   * the first user that the system creates will get this email address, and not whatever is on file for the import.  that way you can confirm the account and what-not.
   * all other email addresses will be prepended with `test-`

@@ -10,7 +10,7 @@ class Importer
     @gitlab = gitlab
     @verbose = opts[:verbose] || false
     @test_email = opts[:test_email]
-    @root = {username: ENV['GITLAB_ROOT_USERNAME'], id: ENV['GITLAB_ROOT_ID'].to_i}
+    @root_id = (ENV['GITLAB_ROOT_ID'] || 1).to_i
   end
 
   def get_email(email, index)
@@ -90,7 +90,7 @@ class Importer
 
         group = @gitlab.create_group(title, gitorious_project['slug'])
         add_users_to_group(group, gitorious_project)
-        add_repos(group, gitorious_project, @root[:id])
+        add_repos(group, gitorious_project, @root_id)
       end
 
     @project_hash
