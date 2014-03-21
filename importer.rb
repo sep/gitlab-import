@@ -132,7 +132,6 @@ class Importer
 
   def add_repos(gitlab_group = nil, gitorious_project, owner_id)
     gitorious_project['repositories'].each do |repo|
-      puts "*"*80 if @verbose
       gitorious_repo_dir = File.join(@repo_dir, gitorious_project['slug'], "#{repo['name']}.git")
   
       if !Dir.exists?(gitorious_repo_dir)
@@ -140,7 +139,8 @@ class Importer
        next
       end
 
-      if Rugged::Repository.new(gitorious_repo_dir).empty?
+      rugged_repo = Rugged::Repository.new(gitorious_repo_dir)
+      if rugged_repo.empty?
        puts "skipping empty repo #{repo['name']}" if @verbose
        next
       end
@@ -167,25 +167,22 @@ class Importer
         new_project = @gitlab.project(new_project.id)
       end
   
-      push_repo(new_project, gitorious_repo_dir)
+      add_users_to_project(new_project, repo)
+      push_repo(new_project, rugged_repo)
     end
   end
 
-  def push_repo(gitlab_project, dir)
-    Dir.chdir(dir) do # TODO: change this to use the repo
+  def push_repo(gitlab_project, repo)
+    Dir.chdir(repo.workdir) do
       url = gitlab_project.ssh_url_to_repo
-      puts "pushing to #{url}" if @verbose
-      repo = Rugged::Repository.new('.')
-      if repo.remotes.none?{|remote| remote.name == 'gitlab'}
-        remote = Rugged::Remote.add(repo, 'gitlab', url)
-      end
-      #refs_to_push = repo.ref_names.reject{n=~/remote/} 
-      #remote.push(refs_to_push)
+
+      Rugged::Remote.add(repo, 'gitlab', url) if repo.remotes.none?{|remote| remote.name == 'gitlab'}
    
       if @dont_push_list.none?{|i| i == gitlab_project.name}
+        puts "    pushing to #{url}" if @verbose
         `git push gitlab --mirror`
       else
-        puts "  ** not pushing #{gitlab_project.name}, it's in the ignore list"
+        puts "    ** not pushing #{gitlab_project.name}, it's in the ignore list"
       end
     end
   end
