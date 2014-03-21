@@ -89,7 +89,7 @@ class Importer
         puts "creating group for #{title}" if @verbose
 
         group = @gitlab.create_group(title, gitorious_project['slug'])
-        add_users(group, gitorious_project)
+        add_users_to_group(group, gitorious_project)
         add_repos(group, gitorious_project, @root[:id])
       end
 
@@ -101,7 +101,20 @@ class Importer
       end
   end
 
-  def add_users(gitlab_group, gitorious_project)
+  def add_users_to_project(gitlab_project, gitorious_repo)
+    gitlab_users = get_users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
+
+    existing_users = gitorious_repo['committers']
+      .reject{|p| not_there = !(gitlab_users.has_key?(p)); puts "    ignoring committer #{p}, not in gitlab." if not_there && @verbose; not_there}
+      .map{|u| {username: u, id: gitlab_users[u]}}
+
+    existing_users.each do |u|
+      puts "    adding user to project - #{u[:username]}" if @verbose
+      @gitlab.add_team_member(gitlab_project.id, u[:id], 50)
+    end
+  end
+
+  def add_users_to_group(gitlab_group, gitorious_project)
     gitlab_users = get_users.inject({}){|memo, obj| memo[obj.username] = obj.id; memo}
 
     existing_users = gitorious_project['repositories']
@@ -111,7 +124,7 @@ class Importer
       .reject{|p| not_there = !(gitlab_users.has_key?(p)); puts "  ignoring committer #{p}, not in gitlab." if not_there && @verbose; not_there}
       .map{|u| {username: u, id: gitlab_users[u]}}
 
-    (existing_users + [@root]).each do |u|
+    existing_users.each do |u|
       puts "  adding user to group - #{u[:username]}" if @verbose
       @gitlab.add_group_member(gitlab_group.id, u[:id], 50)
     end
