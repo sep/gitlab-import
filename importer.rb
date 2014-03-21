@@ -24,8 +24,19 @@ class Importer
     email.split('@').first
   end
 
+  def get_filtered_users
+    filename = 'filtered.txt'
+    return {} unless File.exists?(filename)
+
+    File.read(filename)
+      .lines
+      .map{|l| l.strip}
+      .reject{|l| l.empty?}
+      .inject({}){|memo, obj| memo[obj] = obj; memo}
+  end
+
   def create_users
-    to_filter = File.read('filtered.txt').lines.map{|l| l.strip}.reject{|l| l.empty?}.inject({}){|memo, obj| memo[obj] = obj; memo}
+    to_filter = get_filtered_users
     @user_hash
       .reject{|u| to_filter.has_key?(u['email'])}
       .reject{|u| u['email'] == nil}
