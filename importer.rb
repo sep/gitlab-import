@@ -173,7 +173,7 @@ class Importer
   end
 
   def push_repo(gitlab_project, repo)
-    Dir.chdir(repo.workdir) do
+    Dir.chdir(repo.path) do
       url = gitlab_project.ssh_url_to_repo
 
       Rugged::Remote.add(repo, 'gitlab', url) if repo.remotes.none?{|remote| remote.name == 'gitlab'}
@@ -182,7 +182,7 @@ class Importer
         puts "    pushing to #{url}" if @verbose
         `git push gitlab --mirror`
       else
-        puts "    ** not pushing #{gitlab_project.name}, it's in the ignore list"
+        puts "  ** not pushing #{gitlab_project.name}, it's in the ignore list"
       end
     end
   end
