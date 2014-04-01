@@ -18,7 +18,7 @@ def setup
   data_dir = ENV['IMPORT_DATA_DIR']
 
   puts "Verbose mode: #{verbose}"
-  puts "Test email address: #{test_email}" if verbose
+  puts "Test email address: #{test_email | 'NOT SET'}" if verbose
   puts
 
   Importer.new(
