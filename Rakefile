@@ -54,6 +54,11 @@ namespace :gitlab do
     @importer.create_users
   end
 
+  desc 'delete ssh keys from gitlab users'
+  task :delete_ssh_keys do
+    @importer.delete_ssh_keys
+  end
+
   desc 'load ssh keys from exported data'
   task :load_ssh_keys do
     @importer.load_ssh_keys

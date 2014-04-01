@@ -48,6 +48,18 @@ class Importer
       end
   end
 
+  def delete_ssh_keys
+    get_users
+      .each do |u|
+        puts "deleting keys for: #{u.username}" if @verbose
+        sudo(u.id) do
+          @gitlab.ssh_keys({per_page: 9999}).each do |key|
+            @gitlab.delete_ssh_key(key.id)
+          end
+        end
+      end
+  end
+
   def load_ssh_keys
     @gitlab
       .users
