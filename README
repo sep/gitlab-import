@@ -40,7 +40,7 @@ My recommended workflow:
 
 Note:
 
-* `GITLAB_ROOT_IT` - __[optional]:__ probably `1`
+* `GITLAB_ROOT_ID` - __[optional]:__ probably `1`
 * `IMPORT_TEST_EMAIL` - set this if you're testing.  if this is set:
   * the first user that the system creates will get this email address, and not whatever is on file for the import.  that way you can confirm the account and what-not.
   * all other email addresses will be prepended with `test-`
