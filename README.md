@@ -2,7 +2,7 @@
 
 ## What can it do?
 
-It can import an export that was created by `gitorious-export`.
+It can import an export that was created by [gitorious-export](https://github.com/sep/gitorious-export).
 
 Supports the following things:
 
